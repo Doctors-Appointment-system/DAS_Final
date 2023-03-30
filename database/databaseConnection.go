@@ -18,7 +18,7 @@ func DBinstance() *mongo.Client {
 		log.Fatal("Error loading .env file")
 	}
 
-	MongoDb := os.Getenv("MONGODB_URL")  //creat mongodb envernoment
+	MongoDb := os.Getenv("MONGODB_URL") //creat mongodb envernoment
 
 	client, err := mongo.NewClient(options.Client().ApplyURI(MongoDb))
 	if err != nil {
@@ -28,7 +28,7 @@ func DBinstance() *mongo.Client {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //creat contex of deadline
 	defer cancel()
 
-	// Connect initializes the Client by starting background monitoring goroutines. If the Client was 
+	// Connect initializes the Client by starting background monitoring goroutines. If the Client was
 	// created using the NewClient function, this method must be called before a Client can be used.
 
 	err = client.Connect(ctx) // connect client to database
@@ -43,7 +43,6 @@ func DBinstance() *mongo.Client {
 var Client *mongo.Client = DBinstance()
 
 // this function help us to creat connection with mongodb database
-
 
 func OpenCollection(client *mongo.Client, collectionName string) *mongo.Collection {
 	var collection *mongo.Collection = client.Database("cluster0").Collection(collectionName)
