@@ -29,7 +29,7 @@ func Add_nurse() gin.HandlerFunc {
 			return
 		}
 		c.IndentedJSON(http.StatusCreated, data)
-		query_data := fmt.Sprintf(`INSERT INTO Nurse(Name,Gender,Address,City,Phone,Specialisation,Start_time,End_time,Charge_per_day,Availability,) VALUES('%s','%s','%s','%s','%s','%s','%s','%s','%d','%s')`, data.Name, data.Gender, data.Address, data.City, data.Phone, data.Specialisation, data.Start_time, data.End_time, data.Charge_per_day, data.Availability)
+		query_data := fmt.Sprintf(`INSERT INTO Nurse(Name,Gender,Address,City,Phone,Specialisation,Start_time,End_time,Charge_per_day,Availability) VALUES('%s','%s','%s','%s','%s','%s','%s','%s','%d','%s')`, data.Name, data.Gender, data.Address, data.City, data.Phone, data.Specialisation, data.Start_time, data.End_time, data.Charge_per_day, data.Availability)
 		fmt.Println(query_data)
 
 		// Data insertion operation
@@ -43,7 +43,7 @@ func Add_nurse() gin.HandlerFunc {
 
 		// METHOD TO SHOW THAT HE/SHE IS ADDED AND WHAT THEIR ID IS
 
-		query_data2 := fmt.Sprintf(`SELECT ID,Name FROM Nurse`)
+		query_data2 := fmt.Sprintf(`SELECT ID,Name FROM Nurse WHERE Phone='%s'`, data.Phone)
 		fmt.Println(query_data2)
 
 		//insert data
@@ -258,14 +258,28 @@ func Delete_nurse() gin.HandlerFunc {
 		if err != nil {
 			return
 		}
-
-		delete_query := fmt.Sprintf("DELETE FROM Nurse WHERE ID = %d", data.ID)
-		delete, err := db.Query(delete_query)
+		delete_query1 := fmt.Sprintf("DELETE FROM Nurse_appointment WHERE ID = %d", data.ID)
+		delete1, err := db.Query(delete_query1)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		defer delete.Close()
+		defer delete1.Close()
+		delete_query2 := fmt.Sprintf("DELETE FROM Nurse_feedback WHERE ID = %d", data.ID)
+		delete2, err := db.Query(delete_query2)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		defer delete2.Close()
+		delete_query3 := fmt.Sprintf("DELETE FROM Nurse WHERE ID = %d", data.ID)
+		delete3, err := db.Query(delete_query3)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer delete3.Close()
 		c.JSON(http.StatusOK, gin.H{"message": "Nurse removed from database successfully"})
 	}
 }
@@ -274,7 +288,7 @@ func Delete_nurse() gin.HandlerFunc {
 
 func Get_nurse_by_city() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		db, err := sql.Open("mysql", "root:india@123@tcp(localhost:3306),das")
+		db, err := sql.Open("mysql", "root:india@123@tcp(localhost:3306)/das")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -285,7 +299,7 @@ func Get_nurse_by_city() gin.HandlerFunc {
 		if err != nil {
 			panic(err.Error())
 		}
-		query_data := fmt.Sprintf("SELECT * FROM Nurse WHERE City='%s'", data.City)
+		query_data := fmt.Sprintf(`SELECT * FROM Nurse WHERE City='%s'`, data.City)
 
 		result, err := db.Query(query_data)
 		if err != nil {
@@ -311,7 +325,7 @@ func Get_nurse_by_city() gin.HandlerFunc {
 			if err != nil {
 				panic(err.Error())
 			}
-			output = fmt.Sprintf("%d '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' %d '%s'", ID, Name, Gender, Address, City, Phone, Specialisation, Start_time, End_time, Charge_per_day, Availability)
+			output = fmt.Sprintf(`%d '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' %d '%s'`, ID, Name, Gender, Address, City, Phone, Specialisation, Start_time, End_time, Charge_per_day, Availability)
 			fmt.Println(output)
 			c.JSON(http.StatusOK, gin.H{" All Registerd Nurse are ": output})
 		}
@@ -322,7 +336,7 @@ func Get_nurse_by_city() gin.HandlerFunc {
 
 func Get_nurse_by_specialisation() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		db, err := sql.Open("mysql", "root:india@123@tcp(localhost:3306),das")
+		db, err := sql.Open("mysql", "root:india@123@tcp(localhost:3306)/das")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -333,7 +347,7 @@ func Get_nurse_by_specialisation() gin.HandlerFunc {
 		if err != nil {
 			panic(err.Error())
 		}
-		query_data := fmt.Sprintf("SELECT * FROM Nurse WHERE Specialisation='%s'", data.Specialisation)
+		query_data := fmt.Sprintf(`SELECT * FROM Nurse WHERE Specialisation='%s'`, data.Specialisation)
 
 		result, err := db.Query(query_data)
 		if err != nil {
@@ -359,9 +373,9 @@ func Get_nurse_by_specialisation() gin.HandlerFunc {
 			if err != nil {
 				panic(err.Error())
 			}
-			output = fmt.Sprintf("%d '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' %d '%s'", ID, Name, Gender, Address, City, Phone, Specialisation, Start_time, End_time, Charge_per_day, Availability)
+			output = fmt.Sprintf(`%d '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' %d '%s'`, ID, Name, Gender, Address, City, Phone, Specialisation, Start_time, End_time, Charge_per_day, Availability)
 			fmt.Println(output)
-			c.JSON(http.StatusOK, gin.H{" All Registerd Nurse are ": output})
+			c.JSON(http.StatusOK, gin.H{" Nurse by your enter Specialisation": output})
 		}
 	}
 }
@@ -370,7 +384,7 @@ func Get_nurse_by_specialisation() gin.HandlerFunc {
 
 func Get_nurse_by_location() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		db, err := sql.Open("mysql", "root:india@123@tcp(localhost:3306),das")
+		db, err := sql.Open("mysql", "root:india@123@tcp(localhost:3306)/das")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -381,7 +395,7 @@ func Get_nurse_by_location() gin.HandlerFunc {
 		if err != nil {
 			panic(err.Error())
 		}
-		query_data := fmt.Sprintf("SELECT * FROM Nurse WHERE City='%s',Specialisation='%s'", data.City, data.Specialisation)
+		query_data := fmt.Sprintf(`SELECT * FROM Nurse WHERE City='%s' AND Specialisation='%s'`, data.City, data.Specialisation)
 
 		result, err := db.Query(query_data)
 		if err != nil {
@@ -409,7 +423,7 @@ func Get_nurse_by_location() gin.HandlerFunc {
 			}
 			output = fmt.Sprintf("%d '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' %d '%s'", ID, Name, Gender, Address, City, Phone, Specialisation, Start_time, End_time, Charge_per_day, Availability)
 			fmt.Println(output)
-			c.JSON(http.StatusOK, gin.H{" All Registerd Nurse are ": output})
+			c.JSON(http.StatusOK, gin.H{" All Registerd Nurse by city and specialisation are ": output})
 		}
 	}
 }
@@ -428,33 +442,45 @@ func Check_nurse_appointment() gin.HandlerFunc {
 		if err != nil {
 			return
 		}
-		query_data := fmt.Sprintf("SELECT Patient.Name,Patient.Age,Patient.Gender,Patient.Address,Patient.City,Patient.Phone,Patient.Disease,Patient.Patient_history,appointment.Booking_time FROM appointment INNER JOIN Patient ON appointment.Patient_id = Patient.id where appointment.Doctor_id = %d", data.ID)
+		query_data := fmt.Sprintf("SELECT Patient.Name,Patient.Age,Patient.Gender,Patient.Address,Patient.City,Patient.Phone,Patient.Disease,Patient.Selected_specialisation,Patient.Patient_history FROM Nurse_appointment INNER JOIN Patient ON Nurse_appointment.Patient_id = Patient.id where Nurse_appointment.Nurse_id = %d", data.ID)
+
 		result, err := db.Query(query_data)
+
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		defer result.Close()
+
 		c.JSON(http.StatusOK, gin.H{"message": "Your Appointment"})
 
 		var output interface{}
 
 		for result.Next() {
+
 			var Name string
+
 			var Age int
+
 			var Gender string
+
 			var Address string
+
 			var City string
+
 			var Phone string
+
 			var Disease string
+
 			var Selected_Specialisation string
+
 			var Patient_history string
-			var Booking_time string
-			err = result.Scan(&Name, &Age, &Gender, &Address, &City, &Phone, &Disease, &Patient_history, &Booking_time)
+
+			err = result.Scan(&Name, &Age, &Gender, &Address, &City, &Phone, &Disease, &Selected_Specialisation, &Patient_history)
 			if err != nil {
 				panic(err.Error())
 			}
-			output = fmt.Sprintf("'%s' %d  '%s'  %s  '%s'  '%s'  '%s' '%s' '%s','%s", Name, Age, Gender, Address, City, Phone, Disease, Selected_Specialisation, Patient_history, Booking_time)
+			output = fmt.Sprintf("'%s' %d  '%s'  %s  '%s'  '%s'  '%s' '%s' '%s'", Name, Age, Gender, Address, City, Phone, Disease, Selected_Specialisation, Patient_history)
 			c.JSON(http.StatusOK, gin.H{"Data": output})
 		}
 	}
@@ -475,7 +501,7 @@ func Nurse_checking_feedback() gin.HandlerFunc {
 			return
 		}
 
-		Get_query := fmt.Sprintf("SELECT Patient.Name,feedback.Rating,feedback.feedback_msg FROM feedback INNER JOIN Patient ON feedback.Patient_id = Patient.id where appointment.Doctor_id = %d", data.ID)
+		Get_query := fmt.Sprintf("SELECT Patient.Name,Nurse_feedback.Rating,Nurse_feedback.feedback_msg FROM Nurse_feedback INNER JOIN Patient ON Nurse_feedback.Patient_id = Patient.id where Nurse_feedback .Nurse_id = %d", data.ID)
 		GetResult, err := db.Query(Get_query)
 
 		if err != nil {
@@ -485,7 +511,7 @@ func Nurse_checking_feedback() gin.HandlerFunc {
 
 		defer GetResult.Close()
 
-		c.JSON(http.StatusOK, gin.H{"message": "Your Appointment"})
+		c.JSON(http.StatusOK, gin.H{"message": "Feedback"})
 
 		var output interface{}
 

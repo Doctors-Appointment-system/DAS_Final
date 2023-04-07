@@ -7,7 +7,7 @@ type Lab struct {
 	Phone                      string
 	Address                    string
 	City                       string
-	Pin_code                   string
+	Pin_Code                   string
 	Available_test_name        string
 	Opening_time               string
 	Closing_time               string
@@ -19,6 +19,7 @@ type Lab_Appointment struct {
 	TestAppointmentBookingid int
 	Patient_id               int
 	Doctor_id                int
+	Labid                    int
 	Test_Name                string
 	Booking_time             string
 }

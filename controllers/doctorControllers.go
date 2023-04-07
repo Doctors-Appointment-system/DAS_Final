@@ -30,7 +30,7 @@ func Add_docter() gin.HandlerFunc {
 			return
 		}
 		c.IndentedJSON(http.StatusCreated, data)
-		query_data := fmt.Sprintf(`INSERT INTO Doctor (Name,Gender,Address,City,Phone,Specialisation,Opening_time,Closing_time,Availability_time,,Availability,Available_for_home_visit,Available_for_online_consultancy,Fees) VALUES ( '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',%f)`, data.Name, data.Gender, data.Address, data.City, data.Phone, data.Specialisation, data.Opening_time, data.Closing_time, data.Availability_time, data.Availability, data.Available_for_home_visit, data.Available_for_online_consultancy, data.Fees)
+		query_data := fmt.Sprintf(`INSERT INTO Doctor (Name,Gender,Address,City,Phone,Specialisation,Opening_time,Closing_time,Availability_time,Availability,Available_for_home_visit,Available_for_online_consultancy,Fees) VALUES ( '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',%d)`, data.Name, data.Gender, data.Address, data.City, data.Phone, data.Specialisation, data.Opening_time, data.Closing_time, data.Availability_time, data.Availability, data.Available_for_home_visit, data.Available_for_online_consultancy, data.Fees)
 		fmt.Println(query_data)
 		//insert data
 		insert, err := db.Query(query_data)
@@ -220,22 +220,47 @@ func Delete_docter() gin.HandlerFunc {
 		}
 
 		// _, err = db.Exec("DELETE FROM Dost WHERE id = 10")
-
-		delete_query := fmt.Sprintf("DELETE FROM Doctor WHERE ID = %d", data.ID)
-
-		delete, err := db.Query(delete_query)
-
+		delete_query1 := fmt.Sprintf("DELETE FROM Doctor_feedback WHERE Doctor_ID = %d", data.ID)
+		delete1, err := db.Query(delete_query1)
 		if err != nil {
-
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-
 			return
-
 		}
+		defer delete1.Close()
 
-		defer delete.Close()
+		delete_query2 := fmt.Sprintf("DELETE FROM Doctor_appointment WHERE Doctor_ID = %d", data.ID)
+		delete2, err := db.Query(delete_query2)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer delete2.Close()
 
-		c.JSON(http.StatusOK, gin.H{"message": "Doctor Deleted successfully"})
+		delete_query3 := fmt.Sprintf("DELETE FROM Prescription WHERE Doctor_ID = %d", data.ID)
+		delete3, err := db.Query(delete_query3)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer delete3.Close()
+
+		delete_query4 := fmt.Sprintf("DELETE FROM order_medicines WHERE Doctor_ID = %d", data.ID)
+		delete4, err := db.Query(delete_query4)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer delete4.Close()
+
+		delete_query5 := fmt.Sprintf("DELETE FROM Doctor WHERE ID = %d", data.ID)
+		delete5, err := db.Query(delete_query5)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer delete5.Close()
+
+		c.JSON(http.StatusOK, gin.H{"message": "Doctor Removed successfully"})
 
 	}
 }
@@ -259,7 +284,7 @@ func Check_my_appointment() gin.HandlerFunc {
 
 		}
 
-		Get_query := fmt.Sprintf("SELECT Patient.Name,Patient.Age,Patient.Gender,Patient.Address,Patient.City,Patient.Phone,Patient.Disease,Patient.Patient_history,appointment.Booking_time FROM appointment INNER JOIN Patient ON appointment.Patient_id = Patient.id where appointment.Doctor_id = %d", data.ID)
+		Get_query := fmt.Sprintf("SELECT Patient.Name,Patient.Age,Patient.Gender,Patient.Address,Patient.City,Patient.Phone,Patient.Disease,Patient.Patient_history,Doctor_appointment.Booking_time FROM Doctor_appointment INNER JOIN Patient ON Doctor_appointment.Patient_id = Patient.id where Doctor_appointment.Doctor_id = %d", data.ID)
 
 		GetResult, err := db.Query(Get_query)
 
@@ -335,7 +360,7 @@ func Doctor_Checking_Feedback() gin.HandlerFunc {
 
 		}
 
-		Get_query := fmt.Sprintf("SELECT Patient.Name,feedback.Rating,feedback.feedback_msg FROM feedback INNER JOIN Patient ON feedback.Patient_id = Patient.id where appointment.Doctor_id = %d", data.ID)
+		Get_query := fmt.Sprintf("SELECT Patient.Name,Doctor_feedback.Rating,Doctor_feedback.feedback_msg FROM Doctor_feedback INNER JOIN Patient ON Doctor_feedback.Patient_id = Patient.id where Doctor_feedback.Doctor_id = %d", data.ID)
 
 		GetResult, err := db.Query(Get_query)
 
@@ -349,7 +374,7 @@ func Doctor_Checking_Feedback() gin.HandlerFunc {
 
 		defer GetResult.Close()
 
-		c.JSON(http.StatusOK, gin.H{"message": "Your Appointment"})
+		c.JSON(http.StatusOK, gin.H{"message": "Your FeedBack from Patient"})
 
 		var output interface{}
 

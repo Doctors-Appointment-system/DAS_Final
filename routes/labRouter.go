@@ -18,4 +18,6 @@ func LabtRoutes(incomingRoutes *gin.Engine) {
 
 	incomingRoutes.DELETE("/lab", controller.Delete_lab())
 
+	incomingRoutes.DELETE("/cancel_appointment", controller.Cancel_lab_appointment())
+
 }

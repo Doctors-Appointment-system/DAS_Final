@@ -21,10 +21,9 @@ type Doctor_appointment struct {
 }
 
 type Nurse_appointment struct {
-	Bookingid    int
-	Patient_id   int
-	Nurse_id     int
-	Booking_time string
+	Bookingid  int
+	Patient_id int
+	Nurse_id   int
 }
 
 type Home_visit_appointment struct {

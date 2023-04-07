@@ -14,5 +14,5 @@ type Doctor struct {
 	Availability                     string
 	Available_for_home_visit         string
 	Available_for_online_consultancy string
-	Fees                             float64
+	Fees                             int
 }

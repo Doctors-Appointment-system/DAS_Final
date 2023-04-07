@@ -184,7 +184,37 @@ func Delete_patient() gin.HandlerFunc {
 
 		}
 
-		// _, err = db.Exec("DELETE FROM Dost WHERE id = 10")
+		delete_query1 := fmt.Sprintf("DELETE FROM Doctor_feedback WHERE Patient_id = %d", data.ID)
+		delete1, err := db.Query(delete_query1)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer delete1.Close()
+
+		delete_query2 := fmt.Sprintf("DELETE FROM Doctor_appointment WHERE Patient_id = %d", data.ID)
+		delete2, err := db.Query(delete_query2)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer delete2.Close()
+
+		delete_query3 := fmt.Sprintf("DELETE FROM Prescription WHERE Patient_id = %d", data.ID)
+		delete3, err := db.Query(delete_query3)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer delete3.Close()
+
+		delete_query4 := fmt.Sprintf("DELETE FROM order_medicines WHERE Patient_id = %d", data.ID)
+		delete4, err := db.Query(delete_query4)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer delete4.Close()
 
 		delete_query := fmt.Sprintf("DELETE FROM patient WHERE ID= %d", data.ID)
 
@@ -277,19 +307,14 @@ func GetDoctorByLocation() gin.HandlerFunc {
 		db, err := sql.Open("mysql", "root:india@123@tcp(localhost:3306)/das")
 		fmt.Println("connection is created")
 		if err != nil {
-
 			log.Fatal(err)
-
 		}
 		fmt.Println("Connection Created")
 
 		var data models.Doctor
 		err = c.BindJSON(&data)
-
 		if err != nil {
-
 			return
-
 		}
 
 		query_data := fmt.Sprintf("SELECT * FROM Doctor WHERE City='%s' AND Specialisation='%s'", data.City, data.Specialisation)
@@ -299,15 +324,11 @@ func GetDoctorByLocation() gin.HandlerFunc {
 		fmt.Println("Quary exicuted")
 
 		if err != nil {
-
 			panic(err.Error())
-
 		}
 
 		defer results.Close()
-
 		var output interface{}
-
 		for results.Next() {
 
 			var ID int
@@ -329,9 +350,13 @@ func GetDoctorByLocation() gin.HandlerFunc {
 			var Closing_time string
 
 			var Availability_Time string
+
 			var Availability string
+
 			var Available_for_home_visit string
+
 			var Available_for_online_consultancy string
+
 			var Fees float64
 
 			err = results.Scan(&ID, &Name, &Gender, &Address, &City, &Phone, &Specialisation, &Opening_time, &Closing_time, &Availability_Time, &Availability, &Available_for_home_visit, &Available_for_online_consultancy, &Fees)
@@ -361,13 +386,13 @@ func Book_doctor_appointment() gin.HandlerFunc {
 		}
 
 		var booking_data models.Doctor_appointment
-		var doctor_data models.Doctor
+
 		err = c.BindJSON(&booking_data)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		get_booking_time := fmt.Sprintf("SELECT Availability_time,Closing_time FROM Doctor WHERE id = %d", doctor_data.ID)
+		get_booking_time := fmt.Sprintf("SELECT Availability_time,Closing_time FROM Doctor WHERE id = %d", booking_data.Doctor_id)
 		doctor_result, err := db.Query(get_booking_time)
 		// doctor_result,err := db.Exec(get_booking_time)
 		if err != nil {
@@ -390,14 +415,12 @@ func Book_doctor_appointment() gin.HandlerFunc {
 		}
 
 		var booktime string = people[0].Availability_time
-		var Closing_time string = people[1].Closing_time
+		var Closing_time string = people[0].Closing_time
 
 		if Closing_time == booktime {
 			c.JSON(http.StatusOK, gin.H{"message": "No slot available visit again thank you"})
 
 		}
-
-		c.IndentedJSON(http.StatusCreated, booking_data)
 
 		booking_data.Booking_time = booktime
 
@@ -419,6 +442,7 @@ func Book_doctor_appointment() gin.HandlerFunc {
 			log.Panic(err)
 		}
 
+		c.IndentedJSON(http.StatusCreated, booking_data)
 		c.JSON(http.StatusOK, gin.H{"message": "Your Appointment successfully Booked"})
 
 	}
@@ -445,7 +469,7 @@ func Cancel_doctor_appointment() gin.HandlerFunc {
 
 		c.IndentedJSON(http.StatusCreated, data)
 
-		query_data := fmt.Sprintf("DELETE FROM Doctor_appointment WHERE id =%d", data.Bookingid)
+		query_data := fmt.Sprintf("DELETE FROM Doctor_appointment WHERE Bookingid =%d", data.Bookingid)
 
 		_, err = db.Exec(query_data)
 
@@ -483,7 +507,9 @@ func Doctor_feedback() gin.HandlerFunc {
 			log.Panic(err.Error())
 		}
 		defer insert.Close()
+		c.JSON(http.StatusOK, gin.H{"message": "Thanks for giving Feedback"})
 	}
+
 }
 
 // method for booking of private nurse
@@ -495,13 +521,13 @@ func Book_nurse_appointment() gin.HandlerFunc {
 			log.Fatal(err)
 		}
 		var book_nurse models.Nurse_appointment
-		var nurse_data models.Nurse
+		// var nurse_data models.Nurse
 		err = c.BindJSON(&book_nurse)
 		if err != nil {
 			log.Fatal(err)
 		}
-		get_booking_time := fmt.Sprintf("SELECT Availability FROM Nurse WHERE id = %d", nurse_data.ID)
-		result, err := db.Query(get_booking_time)
+		get_query := fmt.Sprintf("SELECT Availability FROM Nurse WHERE id = %d", book_nurse.Nurse_id)
+		result, err := db.Query(get_query)
 		if err != nil {
 			c.JSON(404, gin.H{"error": "Nurse not found"})
 		}
@@ -513,23 +539,25 @@ func Book_nurse_appointment() gin.HandlerFunc {
 			}
 		}
 		if availability == "NO" {
-			c.JSON(404, gin.H{"error": "Nurse is not available for booking"})
-		}
+			c.JSON(404, gin.H{"Messsage": "Nurse is not available for booking"})
 
-		c.IndentedJSON(http.StatusCreated, book_nurse)
+		} else {
 
-		query_data := fmt.Sprintf(`INSERT INTO Nurse_appointment (Patient_id,Nurse_id,Booking_time) VALUES(%d,%d,'%s')`, book_nurse.Patient_id, book_nurse.Nurse_id, book_nurse.Booking_time)
-		_, err = db.Exec(query_data)
-		if err != nil {
-			log.Panic(err.Error())
-		}
-		A := "NO"
-		query_data2 := fmt.Sprintf(`UPDATE Nurse SET Availability = '%s' WHERE ID = %d`, A, book_nurse.Nurse_id)
+			query_data := fmt.Sprintf(`INSERT INTO Nurse_appointment (Patient_id,Nurse_id) VALUES(%d,%d)`, book_nurse.Patient_id, book_nurse.Nurse_id)
+			_, err = db.Exec(query_data)
+			if err != nil {
+				log.Panic(err.Error())
+			}
+			A := "NO"
+			query_data2 := fmt.Sprintf(`UPDATE Nurse SET Availability = '%s' WHERE ID = %d`, A, book_nurse.Nurse_id)
 
-		fmt.Println(query_data2)
-		_, err = db.Query(query_data2)
-		if err != nil {
-			log.Panic(err.Error())
+			fmt.Println(query_data2)
+			_, err = db.Query(query_data2)
+			if err != nil {
+				log.Panic(err.Error())
+			}
+			c.IndentedJSON(http.StatusCreated, book_nurse)
+			c.JSON(http.StatusOK, gin.H{"message": "Nurse Appointment Booked successfully"})
 		}
 	}
 }
@@ -549,8 +577,8 @@ func Cancel_nurse_appointment() gin.HandlerFunc {
 		if err != nil {
 			log.Fatal(err)
 		}
-		c.IndentedJSON(http.StatusCreated, data)
-		query_data := fmt.Sprintf("DELETE FROM Nurse_appointment WHERE id =%d", data.Bookingid)
+		// c.IndentedJSON(http.StatusCreated, data)
+		query_data := fmt.Sprintf("DELETE FROM Nurse_appointment WHERE Bookingid =%d", data.Bookingid)
 
 		_, err = db.Exec(query_data)
 
@@ -743,7 +771,85 @@ func Cancel_ordered_medicines() gin.HandlerFunc {
 	}
 }
 
+// get doctor by online consultancy availability
+
+func Get_doctor_by_online_consultancy_availability() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		db, err := sql.Open("mysql", "root:india@123@tcp(localhost:3306)/das")
+		if err != nil {
+			return
+		}
+		var data models.Doctor
+
+		err = c.BindJSON(&data)
+		if err != nil {
+			return
+		}
+
+		query_data := fmt.Sprintf("SELECT * FROM Doctor WHERE City='%s' AND Specialisation='%s' AND Available_for_online_consultancy='Yes'", data.City, data.Specialisation)
+		fmt.Println(query_data)
+
+		result, err := db.Query(query_data)
+		fmt.Println("Quary exicuted")
+
+		if err != nil {
+			panic(err.Error())
+		}
+		defer result.Close()
+		fmt.Println(result)
+
+		var output interface{}
+		for result.Next() {
+
+			var ID int
+
+			var Name string
+
+			var Gender string
+
+			var Address string
+
+			var City string
+
+			var Phone string
+
+			var Specialisation string
+
+			var Opening_time string
+
+			var Closing_time string
+
+			var Availability_Time string
+
+			var Availability string
+
+			var Available_for_home_visit string
+
+			var Available_for_online_consultancy string
+
+			var Fees float64
+
+			err = result.Scan(&ID, &Name, &Gender, &Address, &City, &Phone, &Specialisation, &Opening_time, &Closing_time, &Availability_Time, &Availability, &Available_for_home_visit, &Available_for_online_consultancy, &Fees)
+
+			if err != nil {
+				panic(err.Error())
+			}
+			output = fmt.Sprintf("%d  '%s'  '%s'  %s  '%s'  '%s'  '%s' '%s' '%s' '%s'  '%s' '%s''%s' %f", ID, Name, Gender, Address, City, Phone, Specialisation, Opening_time, Closing_time, Availability_Time, Availability, Available_for_home_visit, Available_for_online_consultancy, Fees)
+
+			fmt.Println(output)
+
+			c.JSON(http.StatusOK, gin.H{"Data": output})
+
+		}
+		if output == nil {
+			c.JSON(http.StatusOK, gin.H{"Message": "No Doctor Available for online consultancy"})
+		}
+
+	}
+}
+
 // Online Consultancy - Book Appointment -  Post Method
+
 func Book_online_consultancy_appointment() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		db, err := sql.Open("mysql", "root:india@123@tcp(localhost:3306)/das")
@@ -788,31 +894,31 @@ func Book_online_consultancy_appointment() gin.HandlerFunc {
 		if Closing_time == booktime {
 			c.JSON(http.StatusOK, gin.H{"message": "No slot available visit again thank you"})
 
+		} else {
+
+			booking_data.Booking_time = booktime
+
+			query_data := fmt.Sprintf(`INSERT INTO Online_consultancy (Patient_id,Doctor_id,Booking_time) VALUES(%d,%d,'%s')`, booking_data.Patient_id, booking_data.Doctor_id, booking_data.Booking_time)
+			_, err = db.Exec(query_data)
+			if err != nil {
+
+				log.Panic(err.Error())
+
+			}
+			t1 := helper.Add_time(booktime)
+
+			query_data2 := fmt.Sprintf(`UPDATE Doctor SET Availability_time = '%s' WHERE ID = %d`, t1, booking_data.Doctor_id)
+
+			fmt.Println(query_data2)
+
+			_, err = db.Query(query_data2)
+			if err != nil {
+				log.Panic(err)
+			}
+
+			c.IndentedJSON(http.StatusCreated, booking_data)
+			c.JSON(http.StatusOK, gin.H{"message": "Your Appointment successfully Booked"})
 		}
-
-		c.IndentedJSON(http.StatusCreated, booking_data)
-
-		booking_data.Booking_time = booktime
-
-		query_data := fmt.Sprintf(`INSERT INTO Online_consultancy (Patient_id,Doctor_id,Booking_time) VALUES(%d,%d,'%s')`, booking_data.Patient_id, booking_data.Doctor_id, booking_data.Booking_time)
-		_, err = db.Exec(query_data)
-		if err != nil {
-
-			log.Panic(err.Error())
-
-		}
-		t1 := helper.Add_time(booktime)
-
-		query_data2 := fmt.Sprintf(`UPDATE Doctor SET Availability_time = '%s' WHERE ID = %d`, t1, booking_data.Doctor_id)
-
-		fmt.Println(query_data2)
-
-		_, err = db.Query(query_data2)
-		if err != nil {
-			log.Panic(err)
-		}
-		c.JSON(http.StatusOK, gin.H{"message": "Your Appointment successfully Booked"})
-
 	}
 }
 
@@ -844,7 +950,82 @@ func Cancel_online_consultancy_appointment() gin.HandlerFunc {
 	}
 }
 
-// Home Visit - Book Appointment -  Post Method   INCOMPLETE
+// get doctor by home_visit availability
+
+func Get_doctor_by_home_visit_availability() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		db, err := sql.Open("mysql", "root:india@123@tcp(localhost:3306)/das")
+		if err != nil {
+			return
+		}
+		var data models.Doctor
+
+		err = c.BindJSON(&data)
+		if err != nil {
+			return
+		}
+
+		query_data := fmt.Sprintf("SELECT * FROM Doctor WHERE City='%s' AND Specialisation='%s' AND Available_for_home_visit='Yes'", data.City, data.Specialisation)
+		fmt.Println(query_data)
+
+		result, err := db.Query(query_data)
+		fmt.Println("Quary exicuted")
+
+		if err != nil {
+			panic(err.Error())
+		}
+		defer result.Close()
+
+		var output interface{}
+
+		for result.Next() {
+
+			var ID int
+
+			var Name string
+
+			var Gender string
+
+			var Address string
+
+			var City string
+
+			var Phone string
+
+			var Specialisation string
+
+			var Opening_time string
+
+			var Closing_time string
+
+			var Availability_Time string
+
+			var Availability string
+
+			var Available_for_home_visit string
+
+			var Available_for_online_consultancy string
+
+			var Fees float64
+
+			err = result.Scan(&ID, &Name, &Gender, &Address, &City, &Phone, &Specialisation, &Opening_time, &Closing_time, &Availability_Time, &Availability, &Available_for_home_visit, &Available_for_online_consultancy, &Fees)
+
+			if err != nil {
+				panic(err.Error())
+			}
+			output = fmt.Sprintf("%d  '%s'  '%s'  %s  '%s'  '%s'  '%s' '%s' '%s' '%s'  '%s' '%s''%s' %f", ID, Name, Gender, Address, City, Phone, Specialisation, Opening_time, Closing_time, Availability_Time, Availability, Available_for_home_visit, Available_for_online_consultancy, Fees)
+
+			c.JSON(http.StatusOK, gin.H{"Data": output})
+
+		}
+		if output == nil {
+			c.JSON(http.StatusOK, gin.H{"Message": "No Doctor Available for home visit"})
+		}
+
+	}
+}
+
+// Home Visit - Book Appointment -  Post Method
 
 func Book_home_visit_appointment() gin.HandlerFunc {
 	return func(c *gin.Context) {

@@ -50,11 +50,13 @@ func PatientRoutes(incomingRoutes *gin.Engine) {
 
 	//online_consultancy
 
+	incomingRoutes.GET("/online_consultant", controller.Get_doctor_by_online_consultancy_availability())
 	incomingRoutes.POST("/online_consultancy", controller.Book_online_consultancy_appointment())
 	incomingRoutes.DELETE("/online_consultancy", controller.Cancel_online_consultancy_appointment())
 
 	// Home Visit
 
+	incomingRoutes.GET("/home_visit", controller.Get_doctor_by_home_visit_availability())
 	incomingRoutes.POST("/home_visit", controller.Book_home_visit_appointment())
 	incomingRoutes.DELETE("/home_visit", controller.Cancel_home_visit_appointment())
 

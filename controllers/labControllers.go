@@ -31,7 +31,7 @@ func Add_lab_details() gin.HandlerFunc {
 			return
 		}
 		c.IndentedJSON(http.StatusCreated, data)
-		query_data := fmt.Sprintf(`INSERT INTO Lab (Lab_Name,Lab_Operator,Phone,Address,City,Pin_code,Available_test_name,Opening_time,Closing_time,Availability,Availability_time_for_test) VALUES ( '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')`, data.Lab_Name, data.Lab_Operator_Name, data.Phone, data.Address, data.City, data.Available_test_name, data.Opening_time, data.Closing_time, data.Availability, data.Availability_time_for_test)
+		query_data := fmt.Sprintf(`INSERT INTO Lab (Lab_Name,Lab_Operator,Phone,Address,City,Pin_Code,Available_test_name,Opening_time,Closing_time,Availability,Availability_time_for_test) VALUES ( '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')`, data.Lab_Name, data.Lab_Operator_Name, data.Phone, data.Address, data.City, data.Available_test_name, data.Opening_time, data.Closing_time, data.Availability, data.Availability_time_for_test)
 		fmt.Println(query_data)
 		//insert data
 		insert, err := db.Query(query_data)
@@ -117,9 +117,9 @@ func Update_lab() gin.HandlerFunc {
 			args = append(args, data.City)
 		}
 		fmt.Println(updateColumns, args)
-		if data.Pin_code != "" {
-			updateColumns = append(updateColumns, "Pin_code = ?")
-			args = append(args, data.Pin_code)
+		if data.Pin_Code != "" {
+			updateColumns = append(updateColumns, "Pin_Code = ?")
+			args = append(args, data.Pin_Code)
 		}
 		fmt.Println(updateColumns, args)
 		if data.Available_test_name != "" {
@@ -242,13 +242,13 @@ func Get_Lab_Profile() gin.HandlerFunc {
 			var Phone string
 			var Address string
 			var City string
-			var Pin_code string
+			var Pin_Code string
 			var Available_test_name string
 			var Opening_time string
 			var Closing_time string
 			var Availability string
 			var Availability_time_for_test string
-			err = detail.Scan(&Labid, &Lab_Name, &Lab_Operator_Name, &Phone, &Address, &City, &Phone, &Pin_code, &Available_test_name, &Opening_time, &Closing_time, &Availability, &Availability_time_for_test)
+			err = detail.Scan(&Labid, &Lab_Name, &Lab_Operator_Name, &Phone, &Address, &City, &Phone, &Pin_Code, &Available_test_name, &Opening_time, &Closing_time, &Availability, &Availability_time_for_test)
 
 			if err != nil {
 				panic(err.Error())
@@ -310,13 +310,13 @@ func Get_lab_by_location() gin.HandlerFunc {
 			var Phone string
 			var Address string
 			var City string
-			var Pin_code string
+			var Pin_Code string
 			var Available_test_name string
 			var Opening_time string
 			var Closing_time string
 			var Availability string
 			var Availability_time_for_test string
-			err = detail.Scan(&Labid, &Lab_Name, &Lab_Operator_Name, &Phone, &Address, &City, &Phone, &Pin_code, &Available_test_name, &Opening_time, &Closing_time, &Availability, &Availability_time_for_test)
+			err = detail.Scan(&Labid, &Lab_Name, &Lab_Operator_Name, &Phone, &Address, &City, &Phone, &Pin_Code, &Available_test_name, &Opening_time, &Closing_time, &Availability, &Availability_time_for_test)
 
 			if err != nil {
 				panic(err.Error())
@@ -382,7 +382,7 @@ func Book_test() gin.HandlerFunc {
 
 		booking_data.Booking_time = booktime
 
-		query_data := fmt.Sprintf(`INSERT INTO TestAppointment(Patient_id,Doctor_id,Test_Name,Booking_time) VALUES(%d,%d,'%s','%s')`, booking_data.Patient_id, booking_data.Doctor_id, booking_data.Test_Name, booking_data.Booking_time)
+		query_data := fmt.Sprintf(`INSERT INTO TestAppointment(Patient_id,Doctor_id,Labid,Test_Name,Booking_time) VALUES(%d,%d,%d,'%s','%s')`, booking_data.Patient_id, booking_data.Doctor_id, booking_data.Labid, booking_data.Test_Name, booking_data.Booking_time)
 		_, err = db.Exec(query_data)
 		if err != nil {
 
@@ -453,4 +453,48 @@ func Lab_feedback() gin.HandlerFunc {
 		defer insert.Close()
 
 	}
+}
+
+// cancel lab appointment
+
+func Cancel_lab_appointment() gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+
+		db, err := sql.Open("mysql", "root:india@123@tcp(localhost:3306)/das")
+
+		if err != nil {
+
+			log.Fatal(err)
+
+		}
+
+		var data models.Lab_Appointment
+
+		err = c.BindJSON(&data)
+
+		if err != nil {
+
+			return
+
+		}
+
+		delete_query := fmt.Sprintf("DELETE FROM lab WHERE TestAppointmentBookingid = %d", data.TestAppointmentBookingid)
+
+		delete, err := db.Query(delete_query)
+
+		if err != nil {
+
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+
+			return
+
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Your Appointment successfully Deleted"})
+
+		defer delete.Close()
+
+	}
+
 }
